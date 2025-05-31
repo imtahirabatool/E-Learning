@@ -79,19 +79,19 @@ export const createActivationToken = (user: any): IActivationToken => {
 // activate user
 interface IActivationRequest {
     activation_token: string;
-    activate_code: string;
+    activation_code: string;
 }
 
 export const activateUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { activation_token, activate_code } = req.body as IActivationRequest;
+        const { activation_token, activation_code } = req.body as IActivationRequest;
 
         const newUser: { user: IUser; activationCode: string } = jwt.verify(
             activation_token,
             process.env.ACTIVATION_SECRET as string
         ) as { user: IUser; activationCode: string };
 
-        if (newUser.activationCode !== activate_code) {
+        if (newUser.activationCode !== activation_code) {
             return next(new ErrorHandler("Invalid activation code.", 400));
         }
         const { name, email, password } = newUser.user;
@@ -206,10 +206,8 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
 
         await redis.set(user._id, JSON.stringify(user), "EX", 604800);  //7 days
-        res.status(200).json({
-            status: "success",
-            accessToken,
-        })
+
+        next();
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
     }
@@ -233,6 +231,7 @@ interface ISocialAuth {
     name: string;
     avatar: string;
 }
+
 // social auth
 export const socialAuth = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -257,20 +256,13 @@ interface IUpdateUserInfo {
 
 export const updateUserInfo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { name, email } = req.body as IUpdateUserInfo;
+        const { name } = req.body as IUpdateUserInfo;
         const userId = req.user?._id;
         if (!userId) {
             return next(new Error("User ID is undefined"));
         }
         const user = await userModel.findById(userId);
 
-        if (email && user) {
-            const isEmailExist = await userModel.findOne({ email });
-            if (!isEmailExist) {
-                return next(new ErrorHandler("Email already exits.", 400));
-            }
-            user.email = email;
-        }
 
         if (name && user) {
             user.name = name;
@@ -390,8 +382,17 @@ export const getAllUsersAdmin = CatchAsyncError(async (req: Request, res: Respon
 // update user role --- only admin
 export const updateUserRole = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id, role } = req.body;
-        updateUserRoleService(res, id, role);
+        const { email, role } = req.body;
+        // console.log("Received email & role:", email, role);
+
+        const user = await userModel.findOneAndUpdate({ email }, { role }, { new: true });
+
+        if (!user) {
+            console.log("User not found for email:", email);
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.status(200).json({ success: true, user });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
     }

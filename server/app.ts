@@ -19,7 +19,8 @@ app.use(cookieParser());
 
 // cors -> cross origin resource sharing
 app.use(cors({
-    origin: process.env.ORIGIN
+    origin: process.env.ORIGIN,
+    credentials: true,
 }));
 
 //routes
@@ -39,6 +40,12 @@ app.get("/test", (req: Request, res: Response, next: NextFunction) => {
         message: "API is working!"
     })
 })
+
+app.post("/test-body", (req: Request, res: Response) => {
+    console.log("Received body:", req.body);
+    res.json({ success: true, body: req.body });
+});
+
 
 // unknown routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

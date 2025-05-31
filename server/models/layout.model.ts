@@ -1,54 +1,62 @@
 import { Schema, model, Document } from "mongoose";
 
-interface FaqItem extends Document{
-    question:string;
-    answer:string;
+// Interface for a single FAQ item
+interface FaqItem {
+    question: string;
+    answer: string;
 }
 
-interface Category extends Document{
-    title:string;
+// Interface for a single Category item
+interface CategoryItem {
+    title: string;
 }
 
-interface BannerImage extends Document{
-    public_id:string;
-    url:string;
+// Interface for banner image
+interface BannerImage {
+    public_id: string;
+    url: string;
 }
 
-interface Layout extends Document{
-    type:string;
-    faq:FaqItem;
-    categories:Category;
-    banner:{
-        image:BannerImage;
-        title:string;
-        subTitle:string;
+// Layout Document Interface
+interface Layout extends Document {
+    type: string;
+    faq: FaqItem[];
+    categories: CategoryItem[];
+    banner: {
+        image: BannerImage;
+        title: string;
+        subTitle: string;
     };
 }
 
-const faqSchema=new Schema <FaqItem>({
-    question:{type: String},
-    answer:{type: String},
+// FAQ sub-schema
+const faqSchema = new Schema<FaqItem>({
+    question: { type: String, required: true },
+    answer: { type: String, required: true },
 });
 
-const categorySchema=new Schema<Category>({
-    title:{type: String},
+// Category sub-schema
+const categorySchema = new Schema<CategoryItem>({
+    title: { type: String, required: true },
 });
 
-const bannerImageSchema=new Schema<BannerImage>({
-    public_id:{type:String},
-    url:{type:String},
+// Banner image sub-schema
+const bannerImageSchema = new Schema<BannerImage>({
+    public_id: { type: String, required: true },
+    url: { type: String, required: true },
 });
 
-const layoutSchema=new Schema<Layout>({
-    type:{type:String},
-    faq:[faqSchema],
-    categories:[categorySchema ],
-    banner:{
-        image:bannerImageSchema,
-        title:{type:String},
-        subTitle:{type:String},
-    }
+// Main layout schema
+const layoutSchema = new Schema<Layout>({
+    type: { type: String, required: true },
+    faq: [faqSchema],
+    categories: [categorySchema],
+    banner: {
+        image: bannerImageSchema,
+        title: { type: String, required: true },
+        subTitle: { type: String, required: true },
+    },
 });
 
-const LayoutModel=model<Layout>('Layout', layoutSchema);
+const LayoutModel = model<Layout>("Layout", layoutSchema);
 export default LayoutModel;
