@@ -9,9 +9,9 @@ import { useCreateCourseMutation } from "../../../../redux/features/courses/cour
 import toast from "react-hot-toast";
 import { redirect } from "next/navigation";
 
-type Props = {};
+type Props = object;
 
-const CreateCourse = (props: Props) => {
+const CreateCourse = () => {
   const [createCourse, { isLoading, error, isSuccess }] =
     useCreateCourseMutation();
 
@@ -89,6 +89,7 @@ const CreateCourse = (props: Props) => {
       description: courseInfo.description,
       price: Number(courseInfo.price),
       estimatedPrice: Number(courseInfo.estimatedPrice),
+      categories: courseInfo.categories,
       tags: courseInfo.tags,
       level: courseInfo.level,
       demoUrl: courseInfo.demoUrl,
@@ -107,7 +108,7 @@ const CreateCourse = (props: Props) => {
   };
   console.log(courseData);
 
-  const handleCourseCreate = async (e: any) => {
+  const handleCourseCreate = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const data = courseData;
     if (!isLoading) {
       await createCourse(data);
@@ -148,7 +149,7 @@ const CreateCourse = (props: Props) => {
           <CoursePreview
             active={active}
             setActive={setActive}
-            courseData={courseData}
+            courseInfo={courseInfo}
             handleCourseCreate={handleCourseCreate}
           />
         )}

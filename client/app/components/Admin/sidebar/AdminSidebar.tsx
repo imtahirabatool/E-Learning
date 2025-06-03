@@ -25,7 +25,7 @@ import { Menu, MenuItem, ProSidebar } from "react-pro-sidebar";
 import "react-pro-sidebar/dist/css/styles.css";
 import { useSelector } from "react-redux";
 import avatarDefault from "../../../../public/assets/Profile.png";
-type Props = {};
+type Props = object;
 
 interface itemProps {
   title: string;
@@ -54,7 +54,7 @@ const Item: React.FC<itemProps> = ({
   );
 };
 
-const AdminSidebar = (props: Props) => {
+const AdminSidebar = () => {
   const { user } = useSelector((state: any) => state.auth);
   const [logout, setLogout] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);

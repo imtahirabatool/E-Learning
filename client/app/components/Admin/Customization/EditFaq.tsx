@@ -9,9 +9,9 @@ import { AiOutlineDelete } from "react-icons/ai";
 import { HiMinus, HiPlus } from "react-icons/hi";
 import { IoMdAddCircleOutline } from "react-icons/io";
 
-type Props = {};
+type Props = object;
 
-const EditFaq = (props: Props) => {
+const EditFaq = () => {
   const [questions, setQuestions] = useState<any[]>([]);
   const { data, isLoading, refetch } = useGetHeroDataQuery("FAQ", {
     refetchOnMountOrArgChange: true,
@@ -108,7 +108,7 @@ const EditFaq = (props: Props) => {
                   <input
                     className={`${styles.input} border-none`}
                     value={q.question}
-                    onChange={(e: any) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleQuestionChange(q._id, e.target.value)
                     }
                     placeholder={"Add your question..."}
@@ -128,7 +128,7 @@ const EditFaq = (props: Props) => {
                   <input
                     className={`${styles.input} border-none`}
                     value={q.answer}
-                    onChange={(e: any) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleAnswerChange(q._id, e.target.value)
                     }
                     placeholder={"Add your answer..."}

@@ -10,9 +10,9 @@ import {
   useGetHeroDataQuery,
 } from "@/redux/features/layout/layoutApi";
 
-type Props = {};
+type Props = object;
 
-const EditHero = (props: Props) => {
+const EditHero = () => {
   const [image, setImage] = useState("");
   const [title, setTitle] = useState("");
   const [subTitle, setSubTitle] = useState("");
@@ -45,11 +45,11 @@ const EditHero = (props: Props) => {
 
   console.log("🚀 ~ EditHero ~ data:", data);
 
-  const handleUpdate = (e: any) => {
+  const handleUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e: any) => {
+      reader.onload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (reader.readyState === 2) {
           setImage(e.target.result as string);
         }

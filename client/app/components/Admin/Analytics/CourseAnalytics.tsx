@@ -10,9 +10,9 @@ import {
 } from "recharts";
 import Loader from "../../Loader/Loader";
 import { useGetCourseAnalyticsQuery } from "@/redux/features/analytics/analyticsApi";
-type Props = {};
+type Props = object;
 
-const CourseAnalytics = (props: Props) => {
+const CourseAnalytics = () => {
   const { data, isLoading } = useGetCourseAnalyticsQuery({});
 
   //   const analyticsData = [

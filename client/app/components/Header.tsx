@@ -7,7 +7,6 @@ import CustomModel from "../utils/CustomModel";
 import Login from "../components/Auth/Login";
 import SignUp from "../components/Auth/SignUp";
 import Verification from "../components/Auth/Verification";
-import { useSelector } from "react-redux";
 import avatar from "../../public/assets/Profile.png";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -16,6 +15,7 @@ import {
   useSocialAuthMutation,
 } from "@/redux/features/auth/authApi";
 import toast from "react-hot-toast";
+import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
 
 type Props = {
   open: boolean;
@@ -28,10 +28,13 @@ type Props = {
 const Header: FC<Props> = ({ activeItem, open, setOpen, route, setRoute }) => {
   const [active, setActive] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
-  const { user } = useSelector((state: any) => state.auth);
+  // const { user } = useSelector((state: any) => state.auth);
+  const {
+    data: userData,
+    isLoading,
+    refetch,
+  } = useLoadUserQuery(undefined, {});
   const { data } = useSession();
-  const sessionUser = data?.user;
-  const [called, setCalled] = useState(false);
   const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
   const [logout, setLogout] = useState(false);
 
@@ -40,15 +43,28 @@ const Header: FC<Props> = ({ activeItem, open, setOpen, route, setRoute }) => {
   });
 
   useEffect(() => {
-    if (!user && sessionUser && !called) {
-      socialAuth({
-        email: sessionUser.email,
-        name: sessionUser.name,
-        avatar: sessionUser.image,
-      });
-      setCalled(true);
+    if (!isLoading) {
+      if (!userData) {
+        if (data) {
+          socialAuth({
+            email: data?.user?.email,
+            name: data?.user?.name,
+            avatar: data.user?.image,
+          });
+        }
+        refetch(true);
+      }
     }
-  }, [user, sessionUser, socialAuth, called]);
+
+    if (data === null) {
+      if (isSuccess) {
+        toast.success("Login Successful!");
+      }
+    }
+    if (data === null && !isLoading && !userData) {
+      setLogout(true);
+    }
+  }, [data, userData, isLoading, isSuccess, socialAuth, refetch]);
 
   useEffect(() => {
     if (data === null) {
@@ -65,7 +81,7 @@ const Header: FC<Props> = ({ activeItem, open, setOpen, route, setRoute }) => {
         toast.error(errorData?.data.message);
       }
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, data]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -82,7 +98,7 @@ const Header: FC<Props> = ({ activeItem, open, setOpen, route, setRoute }) => {
     }
   }, []);
 
-  const handleClose = (e: any) => {
+  const handleClose = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.id === "screen") {
       {
         setOpenSidebar(false);
@@ -120,13 +136,13 @@ const Header: FC<Props> = ({ activeItem, open, setOpen, route, setRoute }) => {
                   onClick={() => setOpenSidebar(true)}
                 />
               </div>
-              {user ? (
+              {userData ? (
                 <Link href="/profile">
                   <>
                     <Image
                       src={
-                        user.avatar || avatar
-                          ? user.avatar.url || avatar
+                        userData.avatar || avatar
+                          ? userData.avatar?.url || avatar
                           : avatar
                       }
                       alt="Profile Photo"
@@ -158,13 +174,13 @@ const Header: FC<Props> = ({ activeItem, open, setOpen, route, setRoute }) => {
           >
             <div className="w-[70%] fixed z-[999999999] h-screen bg-white top-0 right-0 dark:bg-slate-900 dark:bg-opacity-90">
               <NavItems activeItem={activeItem} isMobile={true} />
-              {user ? (
+              {userData ? (
                 <>
                   <Link href="/profile">
                     <Image
                       src={
-                        user.avatar || avatar
-                          ? user.avatar.url || avatar
+                        userData.avatar || avatar
+                          ? userData.avatar?.url || avatar
                           : avatar
                       }
                       alt="Profile Photo"
@@ -202,6 +218,7 @@ const Header: FC<Props> = ({ activeItem, open, setOpen, route, setRoute }) => {
               setRoute={setRoute}
               activeItem={activeItem}
               component={Login}
+              refetch={refetch}
             />
           )}
         </>

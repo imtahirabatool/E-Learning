@@ -1,5 +1,5 @@
 "use client";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FC, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import {
@@ -17,49 +17,32 @@ type Props = {
 };
 
 const EditCourse: FC<Props> = ({ id }) => {
-  const [editCourse, { isSuccess, error }] = useEditCourseMutation();
-  const { data } = useGetAllCoursesQuery(
+  const router = useRouter();
+  const [editCourse, { isSuccess, error, isLoading: isEditLoading }] =
+    useEditCourseMutation();
+  const { data, isLoading } = useGetAllCoursesQuery(
     {},
     { refetchOnMountOrArgChange: true }
   );
 
-  const editCourseData =
-    data && data.courses.find((course: any) => course._id === id);
+  const editCourseData = data?.courses.find((course: any) => course._id === id);
 
   useEffect(() => {
     if (isSuccess) {
       toast.success("Course Updated Successfully");
-      redirect("/admin/courses");
+      router.push("/admin/courses");
     }
     if (error) {
       if ("data" in error) {
         const errorMessage = error as any;
         toast.error(errorMessage.data.message);
+      } else {
+        toast.error("An error occurred");
       }
     }
-  }, [isSuccess, error]);
+  }, [isSuccess, error, router]);
 
   const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    if (editCourseData) {
-      setCourseInfo({
-        name: editCourseData.name,
-        description: editCourseData.description,
-        price: editCourseData.price,
-        estimatedPrice: editCourseData?.estimatedPrice,
-        tags: editCourseData.tags,
-        level: editCourseData.level,
-        categories: editCourseData.categories,
-        demoUrl: editCourseData.demoUrl,
-        thumbnail: editCourseData?.thumbnail?.url,
-      });
-      setBenefits(editCourseData.benefits);
-      setPrerequisites(editCourseData.prerequisites);
-      setCourseContentData(editCourseData.courseData);
-    }
-  }, [editCourseData]);
-
   const [courseInfo, setCourseInfo] = useState({
     name: "",
     description: "",
@@ -73,25 +56,30 @@ const EditCourse: FC<Props> = ({ id }) => {
   });
   const [benefits, setBenefits] = useState([{ title: "" }]);
   const [prerequisites, setPrerequisites] = useState([{ title: "" }]);
-  const [courseContentData, setCourseContentData] = useState([
-    {
-      videoUrl: "",
-      title: "",
-      description: "",
-      videoSection: "Untitled Section",
-      links: [
-        {
-          title: "",
-          url: "",
-        },
-      ],
-      suggestion: "",
-    },
-  ]);
+  const [courseContentData, setCourseContentData] = useState<any>([]);
 
-  const [courseData, setCourseData] = useState({});
+  // Initialize form with course data
+  useEffect(() => {
+    if (editCourseData) {
+      setCourseInfo({
+        name: editCourseData.name,
+        description: editCourseData.description,
+        price: editCourseData.price,
+        estimatedPrice: editCourseData?.estimatedPrice,
+        tags: editCourseData.tags,
+        level: editCourseData.level,
+        categories: editCourseData.categories,
+        demoUrl: editCourseData.demoUrl,
+        thumbnail: editCourseData?.thumbnail?.url,
+      });
+      setBenefits(editCourseData.benefits || []);
+      setPrerequisites(editCourseData.prerequisites || []);
+      setCourseContentData(editCourseData.courseData || []);
+    }
+  }, [editCourseData]);
 
-  const handleSubmit = async () => {
+  const handleCourseEdit = async () => {
+    // Format data directly from state
     const formattedBenefits = benefits.map((benefit) => ({
       title: benefit.title,
     }));
@@ -101,12 +89,13 @@ const EditCourse: FC<Props> = ({ id }) => {
     }));
 
     const formattedCourseContentData = courseContentData.map(
-      (courseContent) => ({
+      (courseContent: any) => ({
         videoUrl: courseContent.videoUrl,
         title: courseContent.title,
         description: courseContent.description,
         videoSection: courseContent.videoSection,
-        links: courseContent.links.map((link) => ({
+        videoLength: courseContent.videoLength,
+        links: courseContent.links.map((link: any) => ({
           title: link.title,
           url: link.url,
         })),
@@ -130,12 +119,12 @@ const EditCourse: FC<Props> = ({ id }) => {
       courseContent: formattedCourseContentData,
     };
 
-    setCourseData(data);
-  };
+    if (!editCourseData?._id) {
+      toast.error("Course ID is missing");
+      return;
+    }
 
-  const handleCourseCreate = async (e: any) => {
-    const data = courseData;
-    await editCourse({ id: editCourseData?._id, data });
+    await editCourse({ id: editCourseData._id, data });
   };
 
   return (
@@ -167,7 +156,7 @@ const EditCourse: FC<Props> = ({ id }) => {
             setActive={setActive}
             courseContentData={courseContentData}
             setCourseContentData={setCourseContentData}
-            handleSubmit={handleSubmit}
+            handleSubmit={() => {}} // Not needed for edit flow
           />
         )}
 
@@ -175,13 +164,20 @@ const EditCourse: FC<Props> = ({ id }) => {
           <CoursePreview
             active={active}
             setActive={setActive}
-            courseData={courseData}
-            handleCourseCreate={handleCourseCreate}
+            courseData={{
+              ...courseInfo,
+              benefits,
+              prerequisites,
+              courseContent: courseContentData,
+              totalVideos: courseContentData.length,
+            }}
+            handleCourseCreate={handleCourseEdit}
             isEdit={true}
+            isUpdating={isEditLoading}
           />
         )}
       </div>
-      <div className="w-[20%] mt-[100px] h-screen fixed z-[-1] top-18 right-0">
+      <div className="w-[20%] mt-[100px] h-screen fixed z-10 top-18 right-0">
         <CourseOptions active={active} setActive={setActive} />
       </div>
     </div>

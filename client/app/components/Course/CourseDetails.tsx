@@ -1,15 +1,16 @@
 import { styles } from "@/app/styles/style";
 import Ratings from "@/app/utils/Ratings";
 import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
-// import { Elements } from "@stripe/react-stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IoCheckmarkDoneOutline, IoCloseOutline } from "react-icons/io5";
 import { VscVerifiedFilled } from "react-icons/vsc";
 import { format } from "timeago.js";
 import CheckOutForm from "../Payment/CheckOutForm";
 import CourseContentList from "./CourseContentList";
+import CoursePlayer from "@/utils/CoursePlayer";
 
 type Props = {
   data: any;
@@ -19,27 +20,40 @@ type Props = {
   setOpen: any;
 };
 
-const CourseDetails = ({ data, clientSecret, stripePromise, setRoute, setOpen:openAuthModal }: Props) => {
-  const {data: userData} = useLoadUserQuery(undefined, {});
-  const user = userData?.user;
+const CourseDetails = ({
+  data,
+  clientSecret,
+  stripePromise,
+  setRoute,
+  setOpen: openAuthModal,
+}: Props) => {
+  // console.log("🚀 ~ CourseDetails ~ clientSecret:", clientSecret);
+  // console.log("🚀 ~ CourseDetails ~ stripePromise:", stripePromise);
+  const { data: userData } = useLoadUserQuery(undefined, {});
+  const [user, setUser] = useState();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setUser(userData?.user);
+  }, [userData]);
+
   const discountPercentage =
     ((data?.estimatedPrice - data.price) / data?.estimatedPrice) * 100;
 
   const discountPercentagePrice = discountPercentage.toFixed(0);
-
   const isPurchased =
-    user && user?.courses?.find((item: any) => item._id === data._id);
+    user?.course?.some((item: any) => item.courseId === data._id) || false;
 
-  const handleOrder = (e: any) => {
-    if(user) {
+  const handleOrder = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (user) {
       setOpen(true);
     } else {
-      setRoute("Login")
+      setRoute("Login");
       openAuthModal(true);
     }
   };
 
+  // console.log("🚀 ~ isPurchased:", isPurchased);
   return (
     <div>
       <div className="w-[90%] 800px:w-[90%] m-auto py-5">
@@ -130,7 +144,7 @@ const CourseDetails = ({ data, clientSecret, stripePromise, setRoute, setOpen:op
                 <h5 className="text-[25px] font-Poppins text-black dark:text-white">
                   {Number.isInteger(data?.ratings)
                     ? data?.ratings.toFixed(1)
-                    : data?.ratings.toFixed(2)}{" "}
+                    : data?.ratings.toFixed(2)}
                   Course Rating • {data?.reviews?.length} Reviews
                 </h5>
               </div>
@@ -192,7 +206,7 @@ const CourseDetails = ({ data, clientSecret, stripePromise, setRoute, setOpen:op
                         </div>
                         <div className="pl-2">
                           <div className="flex items-center">
-                            <h5 className="text-[20px]">{i.user.name}</h5>{" "}
+                            <h5 className="text-[20px]">{i.user.name}</h5>
                             <VscVerifiedFilled className="text-[#0095F6] ml-2 text-[20px]" />
                           </div>
                           <p>{i.comment}</p>
@@ -272,12 +286,7 @@ const CourseDetails = ({ data, clientSecret, stripePromise, setRoute, setOpen:op
               <div className="w-full">
                 {stripePromise && clientSecret && (
                   <Elements stripe={stripePromise} options={{ clientSecret }}>
-                    <CheckOutForm
-                      setOpen={setOpen}
-                      data={data}
-                      user={user}
-                      // refetch={refetch}
-                    />
+                    <CheckOutForm setOpen={setOpen} data={data} user={user} />
                   </Elements>
                 )}
               </div>

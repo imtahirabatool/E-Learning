@@ -21,19 +21,21 @@ const CourseData: FC<Props> = ({
   setActive,
 }) => {
   const handleBenefitChange = (index: number, value: string) => {
-    const updateBenefits = [...benefits];
-    updateBenefits[index].title = value;
-    setBenefits(updateBenefits);
+    const updatedBenefits = benefits.map((benefit, i) =>
+      i === index ? { ...benefit, title: value } : benefit
+    );
+    setBenefits(updatedBenefits);
+  };
+
+  const handlePrerequisiteChange = (index: number, value: string) => {
+    const updatedPrerequisites = prerequisites.map((item, i) =>
+      i === index ? { ...item, title: value } : item
+    );
+    setPrerequisites(updatedPrerequisites);
   };
 
   const handleAddBenefits = () => {
     setBenefits([...benefits, { title: "" }]);
-  };
-
-  const handlePrerequisiteChange = (index: number, value: string) => {
-    const updatePrerequisites = [...prerequisites];
-    updatePrerequisites[index].title = value;
-    setPrerequisites(updatePrerequisites);
   };
 
   const handleAddPrerequisites = () => {
@@ -74,7 +76,12 @@ const CourseData: FC<Props> = ({
           />
         ))}
         <AddCircleIcon
-          style={{ margin: "10px 0", cursor: "pointer", width: "30px" , color: "black"}}
+          style={{
+            margin: "10px 0",
+            cursor: "pointer",
+            width: "30px",
+            color: "black",
+          }}
           onClick={handleAddBenefits}
         />
       </div>

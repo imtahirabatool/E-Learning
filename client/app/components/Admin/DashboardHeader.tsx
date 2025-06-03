@@ -7,6 +7,9 @@ import { format } from "timeago.js";
 
 import { FC, useEffect, useRef, useState } from "react";
 import { IoMdNotificationsOutline } from "react-icons/io";
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 type Props = {
   open?: boolean;
@@ -45,12 +48,12 @@ const DashboardHeader: FC<Props> = ({ open, setOpen }) => {
     audioRef.current.load();
   }, [data, isSuccess, refetch]);
 
-  //   useEffect(() => {
-  //     socketId.on("newNotification", (data) => {
-  //       refetch();
-  //       playNotificationSound();
-  //     });
-  //   }, [refetch]);
+  useEffect(() => {
+    socketId.on("newNotification", (data) => {
+      refetch();
+      playNotificationSound();
+    });
+  }, [refetch]);
 
   const handleNotificationStatusChange = async (id: string) => {
     await updateNotificationsStatus(id);
@@ -65,7 +68,7 @@ const DashboardHeader: FC<Props> = ({ open, setOpen }) => {
       >
         <IoMdNotificationsOutline className="text-2xl cursor-pointer text-black dark:text-white" />
         <span className="absolute -top-2 -right-2 bg-[#3ccba0] rounded-full w-5 h-5 text-[12px] flex items-center justify-center text-white">
-          {/* {notifications && notifications.length > 0} */}3
+          {notifications && notifications.length > 0}
         </span>
       </div>
       {open && (

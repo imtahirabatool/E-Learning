@@ -9,9 +9,9 @@ import {
   useGetHeroDataQuery,
 } from "@/redux/features/layout/layoutApi";
 
-type Props = {};
+type Props = object;
 
-const EditCategories = (props: Props) => {
+const EditCategories = () => {
   const [categories, setCategories] = useState<any>([]);
   const { data, isLoading, refetch } = useGetHeroDataQuery("Categories", {
     refetchOnMountOrArgChange: true,

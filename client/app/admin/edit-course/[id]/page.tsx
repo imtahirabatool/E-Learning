@@ -10,7 +10,7 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-const page = ({ params }: any) => {
+const Page = ({ params }: any) => {
   const { id } = use(params);
 
   return (
@@ -33,4 +33,4 @@ const page = ({ params }: any) => {
   );
 };
 
-export default page;
+export default Page;

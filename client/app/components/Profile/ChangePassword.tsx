@@ -3,7 +3,7 @@ import { useUpdatePasswordMutation } from "@/redux/features/user/userApi";
 import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-type Props = {};
+type Props = object;
 
 const ChangePassword: FC<Props> = (props) => {
   const [oldPassword, setOldPassword] = useState("");
@@ -23,7 +23,7 @@ const ChangePassword: FC<Props> = (props) => {
     }
   }, [error, isSuccess]);
 
-  const passwordChangeHandler = async (e: any) => {
+  const passwordChangeHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {

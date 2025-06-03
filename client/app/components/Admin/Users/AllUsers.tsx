@@ -236,7 +236,7 @@ const AllUsers: FC<Props> = ({ isTeam }) => {
                     name=""
                     id=""
                     className={`${styles.input} !mt-6 dark:bg-slate-800 bg-white dark:text-white text-black`}
-                    onChange={(e: any) => setRole(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRole(e.target.value)}
                   >
                     <option value="admin">admin</option>
                     <option value="user">user</option>

@@ -14,9 +14,9 @@ import { FiEdit2 } from "react-icons/fi";
 import { format } from "timeago.js";
 import Loader from "../../Loader/Loader";
 
-type Props = {};
+type Props = object;
 
-const AllCourses = (props: Props) => {
+const AllCourses = () => {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [courseId, setCourseId] = useState("");

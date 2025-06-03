@@ -23,17 +23,16 @@ interface ICourseData extends Document {
     title: string;
     description: string;
     videoUrl: string;
-    thumbnail: object;
+    videoThumbnail: object;
     videoSection: string;
     videoLength: number;
     videoPlayer: string;
     links: ILink[];
-    suggestion: string;
+    suggestions: string;
     questions: IComment[];
 }
 
-interface ICourse extends Document {
-    _id: string;
+export interface ICourse extends Document {
     name: string;
     description: string;
     categories: string;
@@ -48,7 +47,7 @@ interface ICourse extends Document {
     reviews: IReview[];
     courseData: ICourseData[];
     ratings?: number;
-    purchased?: number;
+    purchased: number;
 }
 
 const reviewSchema = new Schema<IReview>({
@@ -58,7 +57,7 @@ const reviewSchema = new Schema<IReview>({
         default: 0,
     },
     comment: String,
-    commentReplies: [Object],
+    commentReplies: [Object]
 });
 
 const linkSchema = new Schema<ILink>({
@@ -70,7 +69,7 @@ const commentSchema = new Schema<IComment>({
     user: Object,
     question: String,
     questionReplies: [Object],
-});
+}, { timestamps: true });
 
 const courseDataSchema = new Schema<ICourseData>({
     videoUrl: String,
@@ -80,62 +79,74 @@ const courseDataSchema = new Schema<ICourseData>({
     videoLength: Number,
     videoPlayer: String,
     links: [linkSchema],
-    suggestion: String,
+    suggestions: String,
     questions: [commentSchema],
 });
 
-const courseSchema = new Schema<ICourse>({
-    name: {
-        type: String,
-        required: true,
+const courseSchema = new Schema<ICourse>(
+    {
+        name: {
+            type: String,
+            required: [true, "Please enter your name"],
+        },
+        description: {
+            type: String,
+            required: [true, "Please enter your description"],
+        },
+        categories: {
+            type: String,
+            required: [true, "Please enter your categories"],
+        },
+        price: {
+            type: Number,
+            required: [true, "Please enter your price"],
+        },
+        estimatedPrice: {
+            type: Number,
+        },
+        thumbnail: {
+            public_id: {
+                type: String,
+            },
+            url: {
+                type: String,
+            },
+        },
+        tags: {
+            type: String,
+            required: [true, "Please enter your tags"],
+        },
+        level: {
+            type: String,
+            required: [true, "Please enter your level"],
+        },
+        demoUrl: {
+            type: String,
+            required: [true, "Please enter your demoUrl"],
+        },
+        benefits: [
+            {
+                title: String,
+            },
+        ],
+        prerequisites: [
+            {
+                title: String,
+            },
+        ],
+        reviews: [reviewSchema],
+        courseData: [courseDataSchema],
+        ratings: {
+            type: Number,
+            default: 0,
+        },
+        purchased: {
+            type: Number,
+            default: 0,
+        },
     },
-    description: {
-        type: String,
-        required: true,
-    },
-    categories: {
-        type: String,
-        required: true,
-    },
-    price: {
-        type: Number,
-        required: true,
-    },
-    estimatedPrice: {
-        type: Number,
-    },
-    thumbnail: {
-        public_id: { type: String, required: true },
-        type: { type: String, required: false },
-        url: { type: String, required: true }
-    },
-    tags: {
-        type: String,
-        required: true,
-    },
-    level: {
-        type: String,
-        required: true,
-    },
-    demoUrl: {
+    { timestamps: true }
+);
 
-        type: String,
-        required: true,
-    },
-    benefits: [{ title: String }],
-    prerequisites: [{ title: String }],
-    reviews: [reviewSchema],
-    courseData: [courseDataSchema],
-    ratings: {
-        type: Number,
-        default: 0,
-    },
-    purchased: {
-        type: Number,
-        default: 0,
-    },
-}, { timestamps: true });
-
-const CourseModel: Model<ICourse> = mongoose.model("Course", courseSchema);
-
-export default CourseModel;
+const courseModel: Model<ICourse> = mongoose.model("Course", courseSchema);
+export default courseModel;

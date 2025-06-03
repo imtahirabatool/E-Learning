@@ -20,9 +20,9 @@ const CourseCard: FC<Props> = ({ item, isProfile }) => {
           src={item?.thumbnail?.url}
           width={500}
           height={300}
-          objectFit="contain"
+          style={{ objectFit: "cover" }}
           className="rounded w-full"
-          alt=""
+          alt="Thumbnail"
         />
         <br />
         <h1 className="font-Poppins text-[16px] text-black dark:text-[#fff]">

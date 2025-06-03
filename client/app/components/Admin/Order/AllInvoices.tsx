@@ -14,38 +14,49 @@ type Props = {
 };
 
 const AllInvoices = ({ isDashboard }: Props) => {
-  const { theme, setTheme } = useTheme();
-  const { isLoading, data } = useGetAllOrdersQuery({});
-  const { data: usersData } = useGetAllUsersQuery({});
-  const { data: coursesData } = useGetAllCoursesQuery({});
+  const { theme } = useTheme();
+  const { isLoading: ordersLoading, data: ordersData } = useGetAllOrdersQuery(
+    {}
+  );
+  const { isLoading: usersLoading, data: usersData } = useGetAllUsersQuery({});
+  const { isLoading: coursesLoading, data: coursesData } =
+    useGetAllCoursesQuery({});
 
-  const [orderData, setOrderData] = useState<any>([]);
+  const [orderData, setOrderData] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (data) {
-      const temp = data.orders.map((item: any) => {
-        const user = usersData?.users.find(
-          (user: any) => user._id === item.userId
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (ordersData && usersData && coursesData) {
+      const temp = ordersData.orders.map((order: any) => {
+        const user = usersData.users.find((u: any) => u._id === order.userId);
+        const course = coursesData.courses.find(
+          (c: any) => c._id === order.courseId
         );
-        const course = coursesData?.courses.find(
-          (course: any) => course._id === item.courseId
-        );
-        console.log("🚀 ~ temp ~ item.courseId:", item.courseId);
+
         return {
-          ...item,
-          userName: user?.name,
-          userEmail: user?.email,
-          title: course?.name,
-          price: "$" + course?.price,
+          ...order,
+          userName: user?.name || "Unknown User",
+          userEmail: user?.email || "unknown@email.com",
+          title: course?.name || "Deleted Course",
+          price: course?.price ? "$" + course.price : "$0",
+          formattedDate: order.createdAt
+            ? format(
+                typeof order.createdAt === "string"
+                  ? order.createdAt
+                  : order.createdAt.toDate?.() || new Date()
+              )
+            : "N/A",
         };
       });
       setOrderData(temp);
     }
-  }, [data, usersData, coursesData]);
+  }, [ordersData, usersData, coursesData]);
 
-  useEffect(() => {
-    console.log("coursesData:", coursesData);
-  }, [data, usersData, coursesData]);
+  const isLoading = ordersLoading || usersLoading || coursesLoading;
 
   const columns: any = [
     { field: "id", headerName: "ID", flex: 0.3 },
@@ -58,38 +69,34 @@ const AllInvoices = ({ isDashboard }: Props) => {
         ]),
     { field: "price", headerName: "Price", flex: 0.5 },
     ...(isDashboard
-      ? [{ field: "created_at", headerName: "Created At", flex: 0.5 }]
+      ? [{ field: "formattedDate", headerName: "Created At", flex: 0.5 }] // 6. Use preformatted date
       : [
           {
             field: " ",
             headerName: "Email",
             flex: 0.2,
-            renderCell: (params: any) => {
-              return (
-                <a href={`mailto:${params.row.userEmail}`}>
-                  <AiOutlineMail
-                    className="dark:text-white text-black"
-                    size={20}
-                  />
-                </a>
-              );
-            },
+            renderCell: (params: any) => (
+              <a href={`mailto:${params.row.userEmail}`}>
+                <AiOutlineMail
+                  className="dark:text-white text-black"
+                  size={20}
+                />
+              </a>
+            ),
           },
         ]),
   ];
 
-  const rows: any = [];
+  const rows = orderData.map((item: any) => ({
+    id: item._id,
+    userName: item.userName,
+    userEmail: item.userEmail,
+    title: item.title,
+    price: item.price,
+    formattedDate: item.formattedDate,
+  }));
 
-  orderData?.forEach((item: any) => {
-    rows.push({
-      id: item._id,
-      userName: item.userName,
-      userEmail: item.userEmail,
-      title: item.title,
-      price: item.price,
-      created_at: format(item.createdAt),
-    });
-  });
+  if (!mounted) return null;
 
   return (
     <div className={!isDashboard ? "mt-[120px]" : "mt-[0px]"}>
@@ -102,10 +109,7 @@ const AllInvoices = ({ isDashboard }: Props) => {
             height={isDashboard ? "35vh" : "82.49vh"}
             overflow={"hidden"}
             sx={{
-              "& .MuiDataGrid-root": {
-                border: "none",
-                outline: "none",
-              },
+              "& .MuiDataGrid-root": { border: "none", outline: "none" },
               "& .css-pqjvzy-MuiSvgIcon-root-MuiSelect-icon": {
                 color: theme === "dark" ? "#fff" : "#000",
               },
@@ -146,12 +150,12 @@ const AllInvoices = ({ isDashboard }: Props) => {
                   theme === "dark" ? `#b7ebde !important` : `#000 !important`,
               },
               "& .MuiDataGrid-toolbarContainer .MuiButton-text": {
-                color: `#fff !important`,
+                color: `${theme === "dark" ? "#fff" : "#000"} !important`, // Fixed toolbar color
               },
             }}
           >
             <DataGrid
-              checkboxSelection={isDashboard ? false : true}
+              checkboxSelection={!isDashboard}
               rows={rows}
               columns={columns}
               components={isDashboard ? {} : { Toolbar: GridToolbar }}

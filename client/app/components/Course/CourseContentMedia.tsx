@@ -19,10 +19,10 @@ import {
 } from "react-icons/ai";
 import { BiMessage } from "react-icons/bi";
 import { VscVerifiedFilled } from "react-icons/vsc";
-// import socketIO from "socket.io-client";
 import { format } from "timeago.js";
-// const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
-// const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 type Props = {
   data: any;
@@ -195,12 +195,25 @@ const CourseContentMedia = ({
     }
   };
 
-  const handleReviewReplySubmit = () => {
+  const handleReviewReplySubmit = async () => {
     if (!replyCreationLoading) {
       if (reply === "") {
         toast.error("Reply can't be empty");
       } else {
-        addReplyInReview({ comment: reply, courseId: id, reviewId });
+        const result = await addReplyInReview({
+          comment: reply,
+          courseId: id,
+          reviewId,
+        });
+
+        if ("data" in result && result.data?.course) {
+          setReply("");
+          setIsReviewReply(false);
+          toast.success("Reply added successfully");
+        } else if ("error" in result) {
+          toast.error("Failed to add reply");
+          console.error(result.error);
+        }
       }
     }
   };
@@ -264,7 +277,7 @@ const CourseContentMedia = ({
       </div>
       <br />
       {activeBar === 0 && (
-        <p className="text-[18px] whitespace-pre-line mb-3 dark:text-white text-black">
+        <p className="text-[18px] whitespace-pre-line break-words mb-3 dark:text-white text-black">
           {data[activeVideo]?.description}
         </p>
       )}
@@ -441,8 +454,8 @@ const CourseContentMedia = ({
                           <h1 className="text-[18px]">{item?.user.name}</h1>
                           <Ratings rating={item.rating} />
                           <p>{item.comment}</p>
-                          <small className="text-[#0000009e] dark:text-[#ffffff83]">
-                            {format(item.createdAt)} •
+                          <small className="text-[#ffffff83]">
+                            {format(i.createdAt)} •
                           </small>
                         </div>
                       </div>
@@ -465,7 +478,7 @@ const CourseContentMedia = ({
                             type="text"
                             placeholder="Enter your reply..."
                             value={reply}
-                            onChange={(e: any) => setReply(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReply(e.target.value)}
                             className="block 800px:ml-12 mt-2 outline-none bg-transparent border-b border-[#000] dark:border-[#fff] p-[5px] w-[95%]"
                           />
                           <button
@@ -498,7 +511,7 @@ const CourseContentMedia = ({
                           </div>
                           <div className="pl-2">
                             <div className="flex items-center">
-                              <h5 className="text-[20px]">{i.user.name}</h5>{" "}
+                              <h5 className="text-[20px]">{i.user.name}</h5>
                               <VscVerifiedFilled className="text-[#0095F6] ml-2 text-[20px]" />
                             </div>
                             <p>{i.comment}</p>
@@ -633,7 +646,7 @@ const CommentItem = ({
                 </div>
                 <div className="pl-3">
                   <div className="flex items-center">
-                    <h5 className="text-[20px]">{item.user.name}</h5>{" "}
+                    <h5 className="text-[20px]">{item.user.name}</h5>
                     {item.user.role === "admin" && (
                       <VscVerifiedFilled className="text-[#0095F6] ml-2 text-[20px]" />
                     )}
@@ -651,7 +664,7 @@ const CommentItem = ({
                   type="text"
                   placeholder="Enter your answer..."
                   value={answer}
-                  onChange={(e: any) => setAnswer(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswer(e.target.value)}
                   className={`block 800px:ml-12 mt-2 outline-none bg-transparent border-b border-[#00000027] dark:text-white text-black dark:border-[#fff] p-[5px] w-[95%] ${
                     answer === "" ||
                     (answerCreationLoading && "cursor-not-allowed")

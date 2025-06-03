@@ -7,9 +7,9 @@ import Heading from "@/app/utils/Heading";
 import React from "react";
 import AllCourses from "../../components/Admin/Course/AllCourses";
 
-type Props = {};
+type Props = object;
 
-const page = (props: Props) => {
+const Page = () => {
   return (
     <AdminProtected>
       <div>
@@ -23,7 +23,7 @@ const page = (props: Props) => {
             <AdminSidebar />
           </div>
           <div className="w-[85%]">
-            <DashboardHero />
+            <DashboardHero isDashboard={true} />
             <AllCourses />
           </div>
         </div>
@@ -32,4 +32,4 @@ const page = (props: Props) => {
   );
 };
 
-export default page;
+export default Page;

@@ -8,7 +8,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
   React.useEffect(() => {
     setIsHydrated(true);
-  }, []);
+  }, [setIsHydrated]);
 
   if (!isHydrated) return <div>Loading...</div>;
 

@@ -1,5 +1,5 @@
 import { styles } from "@/app/styles/style";
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { AiOutlineDelete, AiOutlinePlusCircle } from "react-icons/ai";
 import { BsLink45Deg, BsPencil } from "react-icons/bs";
@@ -10,7 +10,6 @@ type Props = {
   setActive: (active: number) => void;
   courseContentData: any;
   setCourseContentData: (courseContentData: any) => void;
-  handleSubmit: any;
 };
 
 const CourseContent: FC<Props> = ({
@@ -18,36 +17,83 @@ const CourseContent: FC<Props> = ({
   setActive,
   courseContentData,
   setCourseContentData,
-  handleSubmit: handleCourseSubmit,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(
-    Array(courseContentData.length).fill(false)
-  );
+  const [isCollapsed, setIsCollapsed] = useState<boolean[]>([]);
   const [activeSection, setActiveSection] = useState(1);
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
+  // Initialize collapse state
+  useEffect(() => {
+    setIsCollapsed(Array(courseContentData.length).fill(false));
+  }, [courseContentData]);
+
+  // Helper function for immutable content updates
+  const updateContentData = (index: number, updates: any) => {
+    setCourseContentData((prev) => {
+      return prev.map((item: any, i: number) => {
+        if (i === index) {
+          return { ...item, ...updates };
+        }
+        return item;
+      });
+    });
+  };
+
+  // Helper for updating links
+  const updateLinkData = (
+    contentIndex: number,
+    linkIndex: number,
+    updates: any
+  ) => {
+    setCourseContentData((prev) => {
+      return prev.map((content: any, i: number) => {
+        if (i === contentIndex) {
+          const updatedLinks = content.links.map((link: any, j: number) => {
+            if (j === linkIndex) {
+              return { ...link, ...updates };
+            }
+            return link;
+          });
+          return { ...content, links: updatedLinks };
+        }
+        return content;
+      });
+    });
   };
 
   const handleCollapseToggle = (index: number) => {
-    const updatedCollapsed = [...isCollapsed];
-    updatedCollapsed[index] = !updatedCollapsed[index];
-    setIsCollapsed(updatedCollapsed);
-  };
-
-  const handleRemoveLink = (index: number, linkIndex: number) => {
-    const updatedLinks = [...courseContentData];
-    updatedLinks[index].links.splice(linkIndex, 1);
-    setCourseContentData(updatedLinks);
-  };
-
-  const handleAddLink = (index: number) => {
-    const updatedLinks = [...courseContentData];
-    updatedLinks[index].links.push({
-      title: "",
-      url: "",
+    setIsCollapsed((prev) => {
+      const newCollapsed = [...prev];
+      newCollapsed[index] = !newCollapsed[index];
+      return newCollapsed;
     });
-    setCourseContentData(updatedLinks);
+  };
+
+  const handleRemoveLink = (contentIndex: number, linkIndex: number) => {
+    setCourseContentData((prev) => {
+      return prev.map((content: any, i: number) => {
+        if (i === contentIndex) {
+          const updatedLinks = content.links.filter(
+            (_: any, j: number) => j !== linkIndex
+          );
+          return { ...content, links: updatedLinks };
+        }
+        return content;
+      });
+    });
+  };
+
+  const handleAddLink = (contentIndex: number) => {
+    setCourseContentData((prev) => {
+      return prev.map((content: any, i: number) => {
+        if (i === contentIndex) {
+          return {
+            ...content,
+            links: [...content.links, { title: "", url: "" }],
+          };
+        }
+        return content;
+      });
+    });
   };
 
   const newContentHandler = (item: any) => {
@@ -55,306 +101,300 @@ const CourseContent: FC<Props> = ({
       item.title === "" ||
       item.description === "" ||
       item.videoUrl === "" ||
-      item.links[0].title === "" ||
-      item.links[0].url === "" ||
+      item.links[0]?.title === "" ||
+      item.links[0]?.url === "" ||
       item.videoLength === ""
     ) {
       toast.error("Please provide all details of the video");
-    } else {
-      let newVideoSection = "";
-      if (courseContentData.length > 0) {
-        const lastVideoSection =
-          courseContentData[courseContentData.length - 1].videoSection;
-        if (lastVideoSection) {
-          newVideoSection = lastVideoSection;
-        }
-      }
-      const newContent = {
-        videoUrl: "",
-        title: "",
-        description: "",
-        videoSection: newVideoSection,
-        videoLength: "",
-        links: [{ title: "", url: "" }],
-      };
-
-      setCourseContentData([...courseContentData, newContent]);
+      return;
     }
+
+    const lastSection =
+      courseContentData[courseContentData.length - 1]?.videoSection || "";
+    const newContent = {
+      videoUrl: "",
+      title: "",
+      description: "",
+      videoSection: lastSection,
+      videoLength: "",
+      links: [{ title: "", url: "" }],
+      id: Date.now().toString(),
+    };
+
+    setCourseContentData((prev) => [...prev, newContent]);
   };
 
   const addNewSection = () => {
+    const lastItem = courseContentData[courseContentData.length - 1];
+
     if (
-      courseContentData[courseContentData.length - 1].title === "" ||
-      courseContentData[courseContentData.length - 1].description === "" ||
-      courseContentData[courseContentData.length - 1].videoUrl === "" ||
-      courseContentData[courseContentData.length - 1].links[0].title === "" ||
-      courseContentData[courseContentData.length - 1].links[0].url === ""
+      !lastItem ||
+      lastItem.title === "" ||
+      lastItem.description === "" ||
+      lastItem.videoUrl === "" ||
+      lastItem.links[0]?.title === "" ||
+      lastItem.links[0]?.url === "" ||
+      lastItem.videoLength === ""
     ) {
-      toast.error("Please fill all the fields first!");
-    } else {
-      setActiveSection(activeSection + 1);
-      const newContent = {
-        videoUrl: "",
-        title: "",
-        description: "",
-        videoLength: "",
-        videoSection: `Untitled Section ${activeSection}`,
-        links: [{ title: "", url: "" }],
-      };
-      setCourseContentData([...courseContentData, newContent]);
+      toast.error("Please fill all fields in the last section");
+      return;
     }
+
+    const newContent = {
+      videoUrl: "",
+      title: "",
+      description: "",
+      videoLength: "",
+      videoSection: `Untitled Section ${activeSection}`,
+      links: [{ title: "", url: "" }],
+      id: Date.now().toString(),
+    };
+
+    setCourseContentData((prev) => [...prev, newContent]);
+    setActiveSection((prev) => prev + 1);
   };
 
-  const prevButton = () => {
-    setActive(active - 1);
-  };
+  const prevButton = () => setActive(active - 1);
 
   const handleOptions = () => {
+    const lastItem = courseContentData[courseContentData.length - 1];
+
     if (
-      courseContentData[courseContentData.length - 1].title === "" ||
-      courseContentData[courseContentData.length - 1].description === "" ||
-      courseContentData[courseContentData.length - 1].videoUrl === "" ||
-      courseContentData[courseContentData.length - 1].links[0].title === "" ||
-      courseContentData[courseContentData.length - 1].links[0].url === ""
+      !lastItem ||
+      lastItem.title === "" ||
+      lastItem.description === "" ||
+      lastItem.videoUrl === "" ||
+      lastItem.links[0]?.title === "" ||
+      lastItem.links[0]?.url === "" ||
+      lastItem.videoLength === ""
     ) {
-      toast.error("section can't be empty!");
-    } else {
-      setActive(active + 1);
-      handleCourseSubmit();
+      toast.error("Please fill all fields in the last section");
+      return;
     }
+
+    setActive(active + 1);
   };
 
   return (
     <div className="w-[80%] m-auto mt-24 p-3">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={(e) => e.preventDefault()}>
         {courseContentData?.map((item: any, index: number) => {
           const showSectionInput =
             index === 0 ||
-            item.videoSection !== courseContentData[index - 1].videoSection;
+            item.videoSection !== courseContentData[index - 1]?.videoSection;
 
           return (
-            <>
-              <div
-                className={`w-full bg-[#cdc8c817] p-4 ${
-                  showSectionInput ? "mt-10" : "mb-0"
-                }`}
-                key={index}
-              >
-                {showSectionInput && (
-                  <>
-                    <div className="flex w-full items-center">
-                      <input
-                        type="text"
-                        className={`text-[20px] ${
-                          item.videoSection === "Untitled Section"
-                            ? "w-[170px]"
-                            : "w-min"
-                        } font-Poppins cursor-pointer dark:text-white text-black bg-transparent outline-none`}
-                        value={item.videoSection}
-                        onChange={(e) => {
-                          const updatedData = [...courseContentData];
-                          updatedData[index].videoSection = e.target.value;
-                          setCourseContentData(updatedData);
-                        }}
-                      />
-                      <BsPencil className="cursor-pointer dark:text-white text-black" />
-                    </div>
-                    <br />
-                  </>
-                )}
-
-                <div className="flex w-full items-center justify-between my-0">
-                  {isCollapsed[index] ? (
-                    <>
-                      {item.title ? (
-                        <p className="font-Poppins dark:text-white text-black">
-                          {index + 1}. {item.title}
-                        </p>
-                      ) : (
-                        <></>
-                      )}
-                    </>
-                  ) : (
-                    <div></div>
-                  )}
-                  <div className="flex items-center">
-                    <AiOutlineDelete
-                      className={`dark:text-white text-[20px] mr-2 text-black ${
-                        index > 0 ? "cursor-pointer" : "cursor-no-drop"
-                      }`}
-                      onClick={() => {
-                        if (index > 0) {
-                          const updatedData = [...courseContentData];
-                          updatedData.splice(index, 1);
-                          setCourseContentData(updatedData);
-                        }
-                      }}
+            <div
+              className={`w-full bg-[#cdc8c817] p-4 ${
+                showSectionInput ? "mt-10" : "mb-0"
+              }`}
+              key={item.id || index}
+            >
+              {showSectionInput && (
+                <>
+                  <div className="flex w-full items-center">
+                    <input
+                      type="text"
+                      className={`text-[20px] ${
+                        item.videoSection.startsWith("Untitled Section")
+                          ? "w-[170px]"
+                          : "w-min"
+                      } font-Poppins cursor-pointer dark:text-white text-black bg-transparent outline-none`}
+                      value={item.videoSection}
+                      onChange={(e) =>
+                        updateContentData(index, {
+                          videoSection: e.target.value,
+                        })
+                      }
                     />
-                    <MdOutlineKeyboardArrowDown
-                      fontSize="large"
-                      className="dark:text-white text-black"
-                      style={{
-                        transform: isCollapsed[index]
-                          ? "rotate(180deg)"
-                          : "rotate(0deg)",
-                      }}
-                      onClick={() => handleCollapseToggle(index)}
+                    <BsPencil className="cursor-pointer dark:text-white text-black" />
+                  </div>
+                  <br />
+                </>
+              )}
+
+              <div className="flex w-full items-center justify-between my-0">
+                {isCollapsed[index] && item.title && (
+                  <p className="font-Poppins dark:text-white text-black">
+                    {index + 1}. {item.title}
+                  </p>
+                )}
+                <div className="flex items-center">
+                  <AiOutlineDelete
+                    className={`dark:text-white text-[20px] mr-2 text-black ${
+                      index > 0 ? "cursor-pointer" : "cursor-no-drop"
+                    }`}
+                    onClick={() => {
+                      if (index > 0) {
+                        setCourseContentData((prev) =>
+                          prev.filter((_, i) => i !== index)
+                        );
+                      }
+                    }}
+                  />
+                  <MdOutlineKeyboardArrowDown
+                    fontSize="large"
+                    className="dark:text-white text-black"
+                    style={{
+                      transform: isCollapsed[index]
+                        ? "rotate(180deg)"
+                        : "rotate(0deg)",
+                    }}
+                    onClick={() => handleCollapseToggle(index)}
+                  />
+                </div>
+              </div>
+
+              {!isCollapsed[index] && (
+                <>
+                  <div className="my-3">
+                    <label className={styles.label}>Video Title</label>
+                    <input
+                      type="text"
+                      placeholder="Project Plan..."
+                      className={`${styles.input}`}
+                      value={item.title}
+                      onChange={(e) =>
+                        updateContentData(index, { title: e.target.value })
+                      }
                     />
                   </div>
-                </div>
-                {!isCollapsed[index] && (
-                  <>
-                    <div className="my-3">
-                      <label className={styles.label}>Video Title</label>
-                      <input
-                        type="text"
-                        placeholder="Project Plan..."
-                        className={`${styles.input}`}
-                        value={item.title}
-                        onChange={(e) => {
-                          const updatedData = [...courseContentData];
-                          updatedData[index].title = e.target.value;
-                          setCourseContentData(updatedData);
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className={styles.label}>Video Url</label>
-                      <input
-                        type="text"
-                        placeholder="Video URL"
-                        className={`${styles.input}`}
-                        value={item.videoUrl}
-                        onChange={(e) => {
-                          const updatedData = [...courseContentData];
-                          updatedData[index].videoUrl = e.target.value;
-                          setCourseContentData(updatedData);
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className={styles.label}>
-                        Video Length (in minutes)
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="20"
-                        className={`${styles.input}`}
-                        value={item.videoLength}
-                        onChange={(e) => {
-                          const updatedData = [...courseContentData];
-                          updatedData[index].videoLength = e.target.value;
-                          setCourseContentData(updatedData);
-                        }}
-                      />
-                    </div>
 
-                    <div className="mb-3">
-                      <label className={styles.label}>Video Description</label>
-                      <textarea
-                        rows={8}
-                        cols={30}
-                        placeholder="Video Description"
-                        className={`${styles.input} !h-min py-2`}
-                        value={item.description}
-                        onChange={(e) => {
-                          const updatedData = [...courseContentData];
-                          updatedData[index].description = e.target.value;
-                          setCourseContentData(updatedData);
-                        }}
-                      />
-                      <br />
-                    </div>
-                    {item?.links.map((link: any, linkIndex: number) => (
-                      <div className="mb-3 block" key={linkIndex}>
-                        <div className="w-full flex items-center justify-between">
-                          <label className={styles.label}>
-                            Link {linkIndex + 1}
-                          </label>
-                          <AiOutlineDelete
-                            className={`${
-                              linkIndex === 0
-                                ? "cursor-no-drop"
-                                : "cursor-pointer"
-                            } text-black dark:text-white text-[20px]`}
-                            onClick={() =>
-                              linkIndex === 0
-                                ? null
-                                : handleRemoveLink(index, linkIndex)
-                            }
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Source Code... (Link title)"
-                          className={`${styles.input}`}
-                          value={link.title}
-                          onChange={(e) => {
-                            const updatedData = [...courseContentData];
-                            updatedData[index].links[linkIndex].title =
-                              e.target.value;
-                            setCourseContentData(updatedData);
-                          }}
-                        />
-                        <input
-                          type="url"
-                          placeholder="Source Code Url... (Link URL)"
-                          className={`${styles.input} mt-6`}
-                          value={link.url}
-                          onChange={(e) => {
-                            const updatedData = [...courseContentData];
-                            updatedData[index].links[linkIndex].url =
-                              e.target.value;
-                            setCourseContentData(updatedData);
-                          }}
+                  <div className="mb-3">
+                    <label className={styles.label}>Video Url</label>
+                    <input
+                      type="text"
+                      placeholder="Video URL"
+                      className={`${styles.input}`}
+                      value={item.videoUrl}
+                      onChange={(e) =>
+                        updateContentData(index, { videoUrl: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className={styles.label}>
+                      Video Length (in minutes)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="20"
+                      className={`${styles.input}`}
+                      value={item.videoLength}
+                      onChange={(e) =>
+                        updateContentData(index, {
+                          videoLength: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className={styles.label}>Video Description</label>
+                    <textarea
+                      rows={8}
+                      cols={30}
+                      placeholder="Video Description"
+                      className={`${styles.input} !h-min py-2`}
+                      value={item.description}
+                      onChange={(e) =>
+                        updateContentData(index, {
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                    <br />
+                  </div>
+
+                  {item.links.map((link: any, linkIndex: number) => (
+                    <div className="mb-3 block" key={linkIndex}>
+                      <div className="w-full flex items-center justify-between">
+                        <label className={styles.label}>
+                          Link {linkIndex + 1}
+                        </label>
+                        <AiOutlineDelete
+                          className={`${
+                            linkIndex === 0
+                              ? "cursor-no-drop"
+                              : "cursor-pointer"
+                          } text-black dark:text-white text-[20px]`}
+                          onClick={() =>
+                            linkIndex === 0
+                              ? null
+                              : handleRemoveLink(index, linkIndex)
+                          }
                         />
                       </div>
-                    ))}
-                    <br />
-                    <div className="inline-block mb-4">
-                      <p
-                        className="flex items-center text-[18px] dark:text-white text-black cursor-pointer"
-                        onClick={() => handleAddLink(index)}
-                      >
-                        <BsLink45Deg className="mr-2" /> Add Link
-                      </p>
+                      <input
+                        type="text"
+                        placeholder="Source Code... (Link title)"
+                        className={`${styles.input}`}
+                        value={link.title}
+                        onChange={(e) =>
+                          updateLinkData(index, linkIndex, {
+                            title: e.target.value,
+                          })
+                        }
+                      />
+                      <input
+                        type="url"
+                        placeholder="Source Code Url... (Link URL)"
+                        className={`${styles.input} mt-6`}
+                        value={link.url}
+                        onChange={(e) =>
+                          updateLinkData(index, linkIndex, {
+                            url: e.target.value,
+                          })
+                        }
+                      />
                     </div>
-                  </>
-                )}
-                <br />
-                {index === courseContentData.length - 1 && (
-                  <div>
+                  ))}
+
+                  <div className="inline-block mb-4">
                     <p
                       className="flex items-center text-[18px] dark:text-white text-black cursor-pointer"
-                      onClick={(e: any) => newContentHandler(item)}
+                      onClick={() => handleAddLink(index)}
                     >
-                      <AiOutlinePlusCircle className="mr-2" /> Add New Content
+                      <BsLink45Deg className="mr-2" /> Add Link
                     </p>
                   </div>
-                )}
-              </div>
-            </>
+                </>
+              )}
+
+              {index === courseContentData.length - 1 && (
+                <div>
+                  <p
+                    className="flex items-center text-[18px] dark:text-white text-black cursor-pointer"
+                    onClick={() => newContentHandler(item)}
+                  >
+                    <AiOutlinePlusCircle className="mr-2" /> Add New Content
+                  </p>
+                </div>
+              )}
+            </div>
           );
         })}
+
         <br />
         <div
           className="flex items-center text-[20px] dark:text-white text-black cursor-pointer"
-          onClick={() => addNewSection()}
+          onClick={addNewSection}
         >
           <AiOutlinePlusCircle className="mr-2" /> Add new Section
         </div>
       </form>
-      <br />
-      <div className="w-full flex items-center justify-between">
+
+      <div className="w-full flex items-center justify-between mt-8">
         <div
           className="w-full 800px:w-[180px] flex items-center justify-center h-[40px] bg-[#37a39a] text-center text-[#fff] rounded mt-8 cursor-pointer"
-          onClick={() => prevButton()}
+          onClick={prevButton}
         >
           Prev
         </div>
         <div
           className="w-full 800px:w-[180px] flex items-center justify-center h-[40px] bg-[#37a39a] text-center text-[#fff] rounded mt-8 cursor-pointer"
-          onClick={() => handleOptions()}
+          onClick={handleOptions}
         >
           Next
         </div>

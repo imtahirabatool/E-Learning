@@ -1,8 +1,8 @@
 import { styles } from "@/app/styles/style";
-import { FC } from "react";
-import { IoCheckmarkDoneOutline } from "react-icons/io5";
 import Ratings from "@/app/utils/Ratings";
 import CoursePlayer from "@/utils/CoursePlayer";
+import { FC } from "react";
+import { IoCheckmarkDoneOutline } from "react-icons/io5";
 
 type Props = {
   active: number;
@@ -10,6 +10,7 @@ type Props = {
   courseData: any;
   handleCourseCreate: any;
   isEdit?: boolean;
+  isUpdating?: boolean;
 };
 
 const CoursePreview: FC<Props> = ({
@@ -18,6 +19,7 @@ const CoursePreview: FC<Props> = ({
   courseData,
   handleCourseCreate,
   isEdit,
+  isUpdating,
 }) => {
   const discountPercentage =
     ((courseData?.estimatedPrice - courseData?.price) /
@@ -34,6 +36,7 @@ const CoursePreview: FC<Props> = ({
     handleCourseCreate();
   };
 
+  console.log("CoursePreview courseData keys:", Object.keys(courseData || {}));
   return (
     <div className="w-[90%] m-auto py-5 mb-5 dark:text-white text-black">
       <div className="w-full relative">
@@ -123,6 +126,17 @@ const CoursePreview: FC<Props> = ({
         ))}
         <br />
         <br />
+        <div className="pt-5">
+          <h3 className="text-[22px] font-[500]">Categories:</h3>
+          <div className="text-[18px]">
+            {courseData?.categories
+              ? courseData.categories
+              : "No categories selected"}
+          </div>
+        </div>
+
+        <br />
+        <br />
         <div className="w-full">
           <h1 className="text-[25px] font-Poppins font-[600]">
             Course Details
@@ -141,12 +155,13 @@ const CoursePreview: FC<Props> = ({
         >
           Prev
         </div>
-        <div
-          className="w-full 800px:w-[180px] flex items-center justify-center h-[40px] bg-[#37a39a] text-center text-[#fff] rounded mt-8 cursor-pointer"
+        <button
+          className="w-full 800px:w-[180px] flex items-center justify-center h-[40px] bg-[#37a39a] text-center text-[#fff] rounded mt-8 disabled:bg-gray-400"
           onClick={() => createCourse()}
+          disabled={isUpdating}
         >
-          {isEdit ? "Update" : "Create"}
-        </div>
+          {isUpdating ? "Updating..." : isEdit ? "Update" : "Create"}
+        </button>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_SERVER_URI,
+    credentials: "include",
   }),
   endpoints: (builder) => ({
     refreshToken: builder.query({
@@ -20,7 +21,7 @@ export const apiSlice = createApi({
         method: "GET",
         credentials: "include" as const,
       }),
-      async onQueryStarted(arg, {queryFulfilled, dispatch}){
+      async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           const result = await queryFulfilled;
           dispatch(

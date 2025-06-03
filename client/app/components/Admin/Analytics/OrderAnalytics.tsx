@@ -53,7 +53,7 @@ export default function OrdersAnalytics({ isDashboard }: Props) {
             </h1>
             {!isDashboard && (
               <p className={`${styles.label} px-5`}>
-                Last 12 months analytics data{" "}
+                Last 12 months analytics data
               </p>
             )}
           </div>

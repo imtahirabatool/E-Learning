@@ -25,7 +25,7 @@ const ProfileInfo: FC<Props> = ({ user, avatar }) => {
     skip: loadUser ? false : true,
   });
 
-  const imageHandler = async (e: any) => {
+  const imageHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
 
     fileReader.onload = () => {
@@ -50,7 +50,7 @@ const ProfileInfo: FC<Props> = ({ user, avatar }) => {
     }
   }, [error, isSuccess, success, updateUserError]);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (name !== "") {
       await updateUser({

@@ -77,7 +77,7 @@ const SideBarProfile: FC<Props> = ({
             className="dark:text-white text-black"
           />
           <h5 className="pl-2 800px:block hidden font-Poppins dark:text-white text-black ">
-            Admin Dashboard{" "}
+            Admin Dashboard
           </h5>
         </Link>
       )}
